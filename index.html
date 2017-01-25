@@ -1,23 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <link href="styles.css" rel="stylesheet" type="text/css">
   <script src="vendor/lodash.js"></script>
   <script src="vendor/d3.min.js"></script>
   <script src="vendor/d3-selection-multi.min.js"></script>
 </head>
 <body>
-  <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
+  <div class="container">
+    <div>
+       <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
+    </div>
+    <div style="margin-left: 2rem">
+      <!--  Empty -->
+      <div class="row"></div>
+
+      <!-- brush -->
+      <div class="row">
+        <span>Brush</span>
+        <span class="tbtn active">1x1</span>
+        <span class="tbtn">3x3</span>
+        <span class="tbtn">5x5</span>
+      </div>
+
+      <!-- Terrain -->
+      <div class="row">
+        <span>Terrain</span>
+        <span class="tbtn">A</span>
+        <span class="tbtn">B</span>
+        <span class="tbtn">C</span>
+        <span class="tbtn">D</span>
+        <span class="tbtn">E</span>
+      </div>
+
+
+      <!-- Resource -->
+      <div class="row">
+        <span>Resource</span>
+        <span class="tbtn">R1</span>
+        <span class="tbtn">R2</span>
+      </div>
+
+
+    </div>
+  </div>
 </body>
 <script>
+
+let brush = 1;
+
 
 let GRID_SIZE = 32;
 let w = 200 / GRID_SIZE;
 let h = 200 / GRID_SIZE;
 let canvas = d3.select('#map').append('g');
 
+
 let data = [];
-
-
+for (let i=0; i < GRID_SIZE; i++) {
+  data.push([]);
+  for (let j=0; j < GRID_SIZE; j++) {
+    data[i].push({
+      x: i,
+      y: j,
+      h: 0
+    })
+  }
+}
 
 
 for (let x=0; x < GRID_SIZE; x++) {
@@ -28,6 +77,7 @@ for (let x=0; x < GRID_SIZE; x++) {
       .attr('y', y*w)
       .attr('width', w)
       .attr('height', h)
+      .datum(data[x][y])
       .style('fill', '#FFF')
       .style('stroke', 'none');
   }
@@ -54,11 +104,37 @@ for (let y=0; y <= GRID_SIZE; y++) {
 }
 
 
-canvas.selectAll('.cell')
-  .on('click', function() {
-    d3.select(this).style('fill', '#89F');
-  });
+let cells = canvas.selectAll('.cell')
 
+cells.on('click', function(d) {
+  d.h ++;
+  let h = d.h;
+  d3.select(this).style('fill', d3.rgb(255-20*h, 255-20*h, 255-20*h));
+});
+
+canvas.on('mouseover', function(d) {
+  let p = d3.mouse(this);
+  let x = parseInt(p[0]/w, 10);
+  let y = parseInt(p[1]/h, 10);
+
+  console.log(p, x, y);
+
+  canvas.select('.brush').remove();
+  canvas.append('rect')
+    .classed('brush', true)
+    .attr('x', w*x - brush*w)
+    .attr('y', h*y - brush*w)
+    .attr('width', w + 2*brush*w)
+    .attr('height', h + 2*brush*w)
+    .style('fill', '#FFF')
+    .style('fill-opacity', 0.5)
+    .style('stroke', '#555');
+});
+
+
+
+function serialize() {
+}
 
 
 

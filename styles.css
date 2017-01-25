@@ -1,5 +1,34 @@
 body {
-  margin: 0.25rem;
+  margin: 0.5rem;
   font-family: Tahoma;
   font-size: 0.9rem;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-flow: space-between;
+}
+
+.row {
+  margin-bottom: 2rem;
+}
+
+
+.tbtn {
+  color: #EEE;
+  background: #569;
+  padding: 0.2rem 2rem;
+  cursor: pointer;
+  border-radius: 3px;
+
+}
+
+.tbtn:hover {
+  background: #969;
+}
+
+.active {
+  border: 4px solid #707;
+  background: #969;
 }
