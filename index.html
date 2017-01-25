@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="vendor/lodash.js"></script>
+  <script src="vendor/d3.min.js"></script>
+  <script src="vendor/d3-selection-multi.min.js"></script>
+</head>
+<body>
+  <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
+</body>
+<script>
+
+let GRID_SIZE = 32;
+let w = 200 / GRID_SIZE;
+let h = 200 / GRID_SIZE;
+let canvas = d3.select('#map').append('g');
+
+let data = [];
+
+
+
+
+for (let x=0; x < GRID_SIZE; x++) {
+  for (let y=0; y < GRID_SIZE; y++) {
+    canvas.append('rect')
+      .classed('cell', true)
+      .attr('x', x*w)
+      .attr('y', y*w)
+      .attr('width', w)
+      .attr('height', h)
+      .style('fill', '#FFF')
+      .style('stroke', 'none');
+  }
+}
+
+for (let x=0; x <= GRID_SIZE; x++) {
+    canvas.append('line')
+      .attr('x1', x*w)
+      .attr('y1', 0)
+      .attr('x2', x*w)
+      .attr('y2', 200)
+      .style('stroke', '#CCC')
+      .style('stroke-width', 0.5);
+}
+
+for (let y=0; y <= GRID_SIZE; y++) {
+    canvas.append('line')
+      .attr('x1', 0)
+      .attr('y1', y*h)
+      .attr('x2', 200)
+      .attr('y2', y*h)
+      .style('stroke', '#CCC')
+      .style('stroke-width', 0.5);
+}
+
+
+canvas.selectAll('.cell')
+  .on('click', function() {
+    d3.select(this).style('fill', '#89F');
+  });
+
+
+
+
+</script>
+</html>
