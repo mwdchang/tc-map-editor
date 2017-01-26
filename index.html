@@ -175,7 +175,10 @@ function apply(x, y) {
   }
 }
 
+let scale = d3.scaleOrdinal().range(d3.schemeCategory10);
+
 function update() {
+
   canvas.selectAll('.cell')
     .style('fill', function(d) {
       return d3.rgb(255-20*d.h, 255-20*d.h, 255-20*d.h);
@@ -195,7 +198,13 @@ function update() {
     .attr('height', h-2)
     .style('fill', 'none')
     .style('stroke-width', 0.5)
-    .style('stroke', '#d39');
+    .style('stroke', (d) => {
+      if (d.t !== 0) {
+        console.log(d.t);
+        return scale(d.t);
+      }
+      return 'none';
+    });
 }
 
 
@@ -256,6 +265,10 @@ function importPopup() {
 
 d3.select('.overlay').on('click', function() {
   d3.select(this).style('display', 'none');
+});
+
+d3.select('.popup').on('click', function() {
+  d3.event.stopPropagation();
 });
 d3.select('.overlay').style('display', 'none');
 
