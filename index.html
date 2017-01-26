@@ -5,8 +5,10 @@
   <script src="vendor/lodash.js"></script>
   <script src="vendor/d3.min.js"></script>
   <script src="vendor/d3-selection-multi.min.js"></script>
+  <title>Turncraft || Map Editor 0.1</title>
 </head>
 <body>
+  <h4>Turncraft Map Editor - Version 0.1</h4>
   <div class="container">
     <div>
        <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
@@ -14,8 +16,9 @@
     <div style="margin-left: 2rem" id="controls">
 
       <div class="row">
-        <span class="tbtn">Clear</span>
+        <span class="tbtn" onClick="clearData()">Clear</span>
         <span class="tbtn">Export</span>
+        <span class="tbtn" onClick="importPopup()">Import</span>
       </div>
       <hr><br>
 
@@ -29,6 +32,14 @@
       <hr><br>
     </div>
   </div>
+
+  <div class="overlay">
+    <div class="popup">
+      <div>Import - Paste stuff below</div>
+      <textarea style="width:90%; height:80%"></textarea>
+      <span class="tbtn">Import</span>
+    </div>
+  </div>
 </body>
 <script>
 
@@ -37,7 +48,6 @@ let actionFn = null;
 
 function createRow(target, rowData) {
   let row = target.append('div').classed('row', true);
-  console.log(row.node(), rowData.class);
   row.append('span').classed('label', true).html(rowData.label);
   row.selectAll('.actionBtn')
     .data(rowData.actions).enter()
@@ -95,12 +105,10 @@ d3.selectAll('.actionBtn').on('click', function(d, i) {
   d3.selectAll('.actionBtn').classed('active', false);
   d3.select(this).classed('active', true);
   actionFn = d.action;
-  console.log('actionFn', actionFn);
 });
 
 
-
-let GRID_SIZE = 16;
+let GRID_SIZE = 32;
 let w = 200 / GRID_SIZE;
 let h = 200 / GRID_SIZE;
 let canvas = d3.select('#map').append('g');
@@ -111,10 +119,7 @@ for (let i=0; i < GRID_SIZE; i++) {
   data.push([]);
   for (let j=0; j < GRID_SIZE; j++) {
     data[i].push({
-      x: i,
-      y: j,
-      h: 0,
-      t: 0
+      x: i, y: j, h: 0, t: 0
     })
   }
 }
@@ -156,6 +161,20 @@ for (let y=0; y <= GRID_SIZE; y++) {
       .style('stroke-width', 0.5);
 }
 
+
+function apply(x, y) {
+  let xmin = Math.max(x - brush, 0);
+  let ymin = Math.max(y - brush, 0);
+  let xmax = Math.min(x + brush, GRID_SIZE-1);
+  let ymax = Math.min(y + brush, GRID_SIZE-1);
+
+  for (let i=xmin; i <= xmax; i++) {
+    for (let j=ymin; j <= ymax; j++) {
+      actionFn(data[i][j]);
+    }
+  }
+}
+
 function update() {
   canvas.selectAll('.cell')
     .style('fill', function(d) {
@@ -165,42 +184,33 @@ function update() {
   canvas.selectAll('.terrain').remove();
 
   let terrain = _.flatten(data).filter( d => d.t > 0)
-  console.log('Rendering ', terrain);
   canvas.selectAll('.terrain')
     .data(terrain)
     .enter()
     .append('rect')
     .classed('terrain', true)
-    .attr('x', d=>d.x*w)
-    .attr('y', d=>d.y*h)
-    .attr('width', 5)
-    .attr('height', 5)
-    .style('fill', '#d39');
+    .attr('x', d=>d.x*w+1)
+    .attr('y', d=>d.y*h+1)
+    .attr('width', w-2)
+    .attr('height', h-2)
+    .style('fill', 'none')
+    .style('stroke-width', 0.5)
+    .style('stroke', '#d39');
 }
 
 
-let cells = canvas.selectAll('.cell')
-
-cells.on('click', function(d) {
-  let x = Math.max(d.x - brush, 0);
-  let y = Math.max(d.y - brush, 0);
-  let xmax = Math.min(d.x + brush, GRID_SIZE-1);
-  let ymax = Math.min(d.y + brush, GRID_SIZE-1);
-
-  console.log(x, y, xmax, ymax);
-
-  for (let i=x; i <= xmax; i++) {
-    for (let j=y; j <= ymax; j++) {
-      //data[i][j].h ++;
-      console.log('!!!', actionFn);
-      actionFn(data[i][j]);
-    }
-  }
-  update();
-});
-
 canvas.on('mouseleave', function(d) {
   canvas.select('.brush').remove();
+});
+
+
+canvas.on('click', function(d) {
+  let p = d3.mouse(this);
+  let x = parseInt(p[0]/w, 10);
+  let y = parseInt(p[1]/h, 10);
+
+  apply(x, y);
+  update();
 });
 
 canvas.on('mouseover', function(d) {
@@ -219,12 +229,35 @@ canvas.on('mouseover', function(d) {
     .style('fill', '#FFF')
     .style('fill-opacity', 0.5)
     .style('stroke', '#555');
+
+  if (d3.event.buttons > 0) {
+    apply(x, y);
+    update();
+  }
+
 });
 
 
+function clearData() {
+  canvas.selectAll('.cell')
+    .each((d) => {
+      d.h = 0;
+      d.t=0;
+    });
+  update();
+}
 
 function serialize() {
 }
+
+function importPopup() {
+  d3.select('.overlay').style('display', 'block');
+}
+
+d3.select('.overlay').on('click', function() {
+  d3.select(this).style('display', 'none');
+});
+d3.select('.overlay').style('display', 'none');
 
 
 
