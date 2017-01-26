@@ -11,46 +11,96 @@
     <div>
        <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
     </div>
-    <div style="margin-left: 2rem">
-      <!--  Empty -->
-      <div class="row"></div>
+    <div style="margin-left: 2rem" id="controls">
+
+      <div class="row">
+        <span class="tbtn">Clear</span>
+        <span class="tbtn">Export</span>
+      </div>
+      <hr><br>
 
       <!-- brush -->
       <div class="row">
-        <span>Brush</span>
-        <span class="tbtn active">1x1</span>
-        <span class="tbtn">3x3</span>
-        <span class="tbtn">5x5</span>
+        <span class="label">Brush</span>
+        <span class="tbtn brushBtn active">1x1</span>
+        <span class="tbtn brushBtn">3x3</span>
+        <span class="tbtn brushBtn">5x5</span>
       </div>
-
-      <!-- Terrain -->
-      <div class="row">
-        <span>Terrain</span>
-        <span class="tbtn">A</span>
-        <span class="tbtn">B</span>
-        <span class="tbtn">C</span>
-        <span class="tbtn">D</span>
-        <span class="tbtn">E</span>
-      </div>
-
-
-      <!-- Resource -->
-      <div class="row">
-        <span>Resource</span>
-        <span class="tbtn">R1</span>
-        <span class="tbtn">R2</span>
-      </div>
-
-
+      <hr><br>
     </div>
   </div>
 </body>
 <script>
 
-let brush = 1;
+let brush = 0;
+let actionFn = null;
+
+function createRow(target, rowData) {
+  let row = target.append('div').classed('row', true);
+  console.log(row.node(), rowData.class);
+  row.append('span').classed('label', true).html(rowData.label);
+  row.selectAll('.actionBtn')
+    .data(rowData.actions).enter()
+    .append('span')
+    .classed('tbtn', true)
+    .classed(rowData.class, true)
+    .html(d=>d.label);
+}
 
 
-let GRID_SIZE = 32;
+let heightRow = {
+  label: 'Height',
+  class: 'actionBtn',
+  actions: [
+    {label: 'Raise', action:(d)=>d.h++},
+    {label: 'Lower', action:(d)=>d.h--}
+  ]
+};
+
+let terrainRow = {
+  label: 'Terrain',
+  class: 'actionBtn',
+  actions: [
+    {label: '0', action:(d)=>d.t=0},
+    {label: '1', action:(d)=>d.t=1},
+    {label: '2', action:(d)=>d.t=2},
+    {label: '3', action:(d)=>d.t=3},
+    {label: '4', action:(d)=>d.t=4},
+  ]
+};
+
+let resourceRow = {
+  label: 'Resource',
+  class: 'actionBtn',
+  actions: [
+    {label: 'A'},
+    {label: 'B'}
+  ]
+};
+
+
+let target = d3.select('#controls');
+createRow(target, heightRow);
+createRow(target, terrainRow);
+createRow(target, resourceRow);
+
+
+d3.selectAll('.brushBtn').on('click', function(d, i) {
+  d3.selectAll('.brushBtn').classed('active', false);
+  d3.select(this).classed('active', true);
+  brush = i;
+});
+
+d3.selectAll('.actionBtn').on('click', function(d, i) {
+  d3.selectAll('.actionBtn').classed('active', false);
+  d3.select(this).classed('active', true);
+  actionFn = d.action;
+  console.log('actionFn', actionFn);
+});
+
+
+
+let GRID_SIZE = 16;
 let w = 200 / GRID_SIZE;
 let h = 200 / GRID_SIZE;
 let canvas = d3.select('#map').append('g');
@@ -63,7 +113,8 @@ for (let i=0; i < GRID_SIZE; i++) {
     data[i].push({
       x: i,
       y: j,
-      h: 0
+      h: 0,
+      t: 0
     })
   }
 }
@@ -89,6 +140,7 @@ for (let x=0; x <= GRID_SIZE; x++) {
       .attr('y1', 0)
       .attr('x2', x*w)
       .attr('y2', 200)
+      .style('pointer-events', 'none')
       .style('stroke', '#CCC')
       .style('stroke-width', 0.5);
 }
@@ -99,25 +151,62 @@ for (let y=0; y <= GRID_SIZE; y++) {
       .attr('y1', y*h)
       .attr('x2', 200)
       .attr('y2', y*h)
+      .style('pointer-events', 'none')
       .style('stroke', '#CCC')
       .style('stroke-width', 0.5);
+}
+
+function update() {
+  canvas.selectAll('.cell')
+    .style('fill', function(d) {
+      return d3.rgb(255-20*d.h, 255-20*d.h, 255-20*d.h);
+    });
+
+  canvas.selectAll('.terrain').remove();
+
+  let terrain = _.flatten(data).filter( d => d.t > 0)
+  console.log('Rendering ', terrain);
+  canvas.selectAll('.terrain')
+    .data(terrain)
+    .enter()
+    .append('rect')
+    .classed('terrain', true)
+    .attr('x', d=>d.x*w)
+    .attr('y', d=>d.y*h)
+    .attr('width', 5)
+    .attr('height', 5)
+    .style('fill', '#d39');
 }
 
 
 let cells = canvas.selectAll('.cell')
 
 cells.on('click', function(d) {
-  d.h ++;
-  let h = d.h;
-  d3.select(this).style('fill', d3.rgb(255-20*h, 255-20*h, 255-20*h));
+  let x = Math.max(d.x - brush, 0);
+  let y = Math.max(d.y - brush, 0);
+  let xmax = Math.min(d.x + brush, GRID_SIZE-1);
+  let ymax = Math.min(d.y + brush, GRID_SIZE-1);
+
+  console.log(x, y, xmax, ymax);
+
+  for (let i=x; i <= xmax; i++) {
+    for (let j=y; j <= ymax; j++) {
+      //data[i][j].h ++;
+      console.log('!!!', actionFn);
+      actionFn(data[i][j]);
+    }
+  }
+  update();
+});
+
+canvas.on('mouseleave', function(d) {
+  canvas.select('.brush').remove();
 });
 
 canvas.on('mouseover', function(d) {
   let p = d3.mouse(this);
   let x = parseInt(p[0]/w, 10);
   let y = parseInt(p[1]/h, 10);
-
-  console.log(p, x, y);
 
   canvas.select('.brush').remove();
   canvas.append('rect')
@@ -126,6 +215,7 @@ canvas.on('mouseover', function(d) {
     .attr('y', h*y - brush*w)
     .attr('width', w + 2*brush*w)
     .attr('height', h + 2*brush*w)
+    .style('pointer-events', 'none')
     .style('fill', '#FFF')
     .style('fill-opacity', 0.5)
     .style('stroke', '#555');
