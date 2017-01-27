@@ -5,13 +5,15 @@
   <script src="vendor/lodash.js"></script>
   <script src="vendor/d3.min.js"></script>
   <script src="vendor/d3-selection-multi.min.js"></script>
+  <script src="util.js"></script>
+
   <title>Turncraft || Map Editor 0.1</title>
 </head>
 <body>
   <h4>Turncraft Map Editor - Version 0.1</h4>
   <div class="container">
     <div>
-       <svg id="map" width="500px" height="500px" viewBox="0 0 200 200"></svg>
+       <svg id="map" width="450px" height="450px" viewBox="0 0 200 200"></svg>
     </div>
     <div style="margin-left: 2rem" id="controls">
 
@@ -42,6 +44,8 @@
   </div>
 </body>
 <script>
+
+let scale = d3.scaleOrdinal().range(d3.schemeCategory10);
 
 let brush = 0;
 let actionFn = null;
@@ -93,6 +97,8 @@ let target = d3.select('#controls');
 createRow(target, heightRow);
 createRow(target, terrainRow);
 createRow(target, resourceRow);
+target.append('div').classed('row', true)
+  .attr('id', 'summary').style('font-size', '80%');
 
 
 d3.selectAll('.brushBtn').on('click', function(d, i) {
@@ -139,27 +145,9 @@ for (let x=0; x < GRID_SIZE; x++) {
   }
 }
 
-for (let x=0; x <= GRID_SIZE; x++) {
-    canvas.append('line')
-      .attr('x1', x*w)
-      .attr('y1', 0)
-      .attr('x2', x*w)
-      .attr('y2', 200)
-      .style('pointer-events', 'none')
-      .style('stroke', '#CCC')
-      .style('stroke-width', 0.5);
-}
+XGrid(canvas, GRID_SIZE, h);
+YGrid(canvas, GRID_SIZE, w);
 
-for (let y=0; y <= GRID_SIZE; y++) {
-    canvas.append('line')
-      .attr('x1', 0)
-      .attr('y1', y*h)
-      .attr('x2', 200)
-      .attr('y2', y*h)
-      .style('pointer-events', 'none')
-      .style('stroke', '#CCC')
-      .style('stroke-width', 0.5);
-}
 
 
 function apply(x, y) {
@@ -175,7 +163,6 @@ function apply(x, y) {
   }
 }
 
-let scale = d3.scaleOrdinal().range(d3.schemeCategory10);
 
 function update() {
 
@@ -200,11 +187,18 @@ function update() {
     .style('stroke-width', 0.5)
     .style('stroke', (d) => {
       if (d.t !== 0) {
-        console.log(d.t);
         return scale(d.t);
       }
       return 'none';
     });
+
+  let summary = d3.select('#summary');
+  summary.selectAll('*').remove();
+  let terrainSummary = _.chain(data).flatten().groupBy( d => d.t).value();
+  let keys = Object.keys(terrainSummary);
+  keys.forEach( key => {
+    summary.append('div').text(key + ' ' + terrainSummary[key].length);
+  });
 }
 
 
@@ -217,7 +211,6 @@ canvas.on('click', function(d) {
   let p = d3.mouse(this);
   let x = parseInt(p[0]/w, 10);
   let y = parseInt(p[1]/h, 10);
-
   apply(x, y);
   update();
 });
@@ -243,7 +236,6 @@ canvas.on('mouseover', function(d) {
     apply(x, y);
     update();
   }
-
 });
 
 
