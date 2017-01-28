@@ -19,7 +19,7 @@
 
       <div class="row">
         <span class="tbtn" onClick="clearData()">Clear</span>
-        <span class="tbtn">Export</span>
+        <span class="tbtn" onClick="exportPopup()">Export</span>
         <span class="tbtn" onClick="importPopup()">Import</span>
       </div>
       <hr><br>
@@ -35,13 +35,25 @@
     </div>
   </div>
 
-  <div class="overlay">
+  <div class="overlay import-popup">
     <div class="popup">
       <div>Import - Paste stuff below</div>
-      <textarea style="width:90%; height:80%"></textarea>
+      <textarea style="width:90%; height:80%">
+        10,10
+        5,5,1
+        5,8,1
+        5,9,1
+      </textarea>
       <span class="tbtn">Import</span>
     </div>
   </div>
+
+  <div class="overlay export-popup">
+    <div class="popup">
+      <textarea style="width:100%; height:100%" readonly></textarea>
+    </div>
+  </div>
+
 </body>
 <script>
 
@@ -118,32 +130,20 @@ let GRID_SIZE = 32;
 let w = 200 / GRID_SIZE;
 let h = 200 / GRID_SIZE;
 let canvas = d3.select('#map').append('g');
+let data = initData(GRID_SIZE);
 
+canvas.selectAll('.cell')
+  .data(data)
+  .enter()
+  .append('rect')
+  .classed('cell', true)
+  .attr('x', d => d.x*w)
+  .attr('y', d => d.y*w)
+  .attr('width', w)
+  .attr('height', h)
+  .style('fill', '#FFF')
+  .style('stroke', 'none');
 
-let data = [];
-for (let i=0; i < GRID_SIZE; i++) {
-  data.push([]);
-  for (let j=0; j < GRID_SIZE; j++) {
-    data[i].push({
-      x: i, y: j, h: 0, t: 0
-    })
-  }
-}
-
-
-for (let x=0; x < GRID_SIZE; x++) {
-  for (let y=0; y < GRID_SIZE; y++) {
-    canvas.append('rect')
-      .classed('cell', true)
-      .attr('x', x*w)
-      .attr('y', y*w)
-      .attr('width', w)
-      .attr('height', h)
-      .datum(data[x][y])
-      .style('fill', '#FFF')
-      .style('stroke', 'none');
-  }
-}
 
 XGrid(canvas, GRID_SIZE, h);
 YGrid(canvas, GRID_SIZE, w);
@@ -158,7 +158,7 @@ function apply(x, y) {
 
   for (let i=xmin; i <= xmax; i++) {
     for (let j=ymin; j <= ymax; j++) {
-      actionFn(data[i][j]);
+      actionFn(data[i*GRID_SIZE + j]);
     }
   }
 }
@@ -194,10 +194,15 @@ function update() {
 
   let summary = d3.select('#summary');
   summary.selectAll('*').remove();
-  let terrainSummary = _.chain(data).flatten().groupBy( d => d.t).value();
-  let keys = Object.keys(terrainSummary);
-  keys.forEach( key => {
-    summary.append('div').text(key + ' ' + terrainSummary[key].length);
+
+  let terrainSummary = _.chain(data)
+    .flatten()
+    .groupBy( d => d.t)
+    .map( (v,k) => { return {k:k, v:v.length}})
+    .value();
+
+  terrainSummary.forEach( s => {
+    summary.append('div').text(s.k+ ' ' + s.v);
   });
 }
 
@@ -251,18 +256,24 @@ function clearData() {
 function serialize() {
 }
 
-function importPopup() {
-  d3.select('.overlay').style('display', 'block');
+function exportPopup() {
+  d3.select('.export-popup').style('display', 'block');
+  let textarea = d3.select('.export-popup').select('textarea');
+  textarea.text(exportData(data, GRID_SIZE));
 }
 
-d3.select('.overlay').on('click', function() {
+function importPopup() {
+  d3.select('.import-popup').style('display', 'block');
+}
+
+d3.selectAll('.overlay').on('click', function() {
   d3.select(this).style('display', 'none');
 });
 
-d3.select('.popup').on('click', function() {
+d3.selectAll('.popup').on('click', function() {
   d3.event.stopPropagation();
 });
-d3.select('.overlay').style('display', 'none');
+d3.selectAll('.overlay').style('display', 'none');
 
 
 
