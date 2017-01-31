@@ -39,12 +39,14 @@
     <div class="popup">
       <div>Import - Paste stuff below</div>
       <textarea style="width:90%; height:80%">
-        10,10
-        5,5,1
-        5,8,1
-        5,9,1
+        32
+        5,5,3
+        5,8,3
+        5,9,3
+        5,10,3
+        6,10,3
       </textarea>
-      <span class="tbtn">Import</span>
+      <span class="tbtn" onclick="load()">Import</span>
     </div>
   </div>
 
@@ -130,24 +132,18 @@ let GRID_SIZE = 32;
 let w = 200 / GRID_SIZE;
 let h = 200 / GRID_SIZE;
 let canvas = d3.select('#map').append('g');
+
+let cfg = {
+  w: w,
+  h: h,
+  gridSize: GRID_SIZE
+}
+
+
 let data = initData(GRID_SIZE);
-
-canvas.selectAll('.cell')
-  .data(data)
-  .enter()
-  .append('rect')
-  .classed('cell', true)
-  .attr('x', d => d.x*w)
-  .attr('y', d => d.y*w)
-  .attr('width', w)
-  .attr('height', h)
-  .style('fill', '#FFF')
-  .style('stroke', 'none');
-
-
-XGrid(canvas, GRID_SIZE, h);
-YGrid(canvas, GRID_SIZE, w);
-
+bindCells(canvas, data, cfg);
+XGrid(canvas, cfg);
+YGrid(canvas, cfg);
 
 
 function apply(x, y) {
@@ -253,8 +249,6 @@ function clearData() {
   update();
 }
 
-function serialize() {
-}
 
 function exportPopup() {
   d3.select('.export-popup').style('display', 'block');
@@ -264,6 +258,24 @@ function exportPopup() {
 
 function importPopup() {
   d3.select('.import-popup').style('display', 'block');
+}
+
+function load() {
+  let text = d3.select('.import-popup').select('textarea').node().value;
+  iData = importData(text);
+  data = iData.data;
+
+  GRID_SIZE = iData.gridSize;
+  w = 200 / GRID_SIZE;
+  h = 200 / GRID_SIZE;
+  cfg = {
+    w: w, h: h, gridSize: GRID_SIZE
+  };
+  bindCells(canvas, iData.data, cfg);
+  XGrid(canvas, cfg);
+  YGrid(canvas, cfg);
+  update();
+  d3.selectAll('.overlay').style('display', 'none');
 }
 
 d3.selectAll('.overlay').on('click', function() {
