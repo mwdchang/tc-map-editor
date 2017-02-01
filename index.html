@@ -38,14 +38,7 @@
   <div class="overlay import-popup">
     <div class="popup">
       <div>Import - Paste stuff below</div>
-      <textarea style="width:90%; height:80%">
-        32
-        5,5,3
-        5,8,3
-        5,9,3
-        5,10,3
-        6,10,3
-      </textarea>
+      <textarea style="width:90%; height:80%"></textarea>
       <span class="tbtn" onclick="load()">Import</span>
     </div>
   </div>
@@ -60,7 +53,6 @@
 <script>
 
 let scale = d3.scaleOrdinal().range(d3.schemeCategory10);
-
 let brush = 0;
 let actionFn = null;
 
@@ -80,8 +72,10 @@ let heightRow = {
   label: 'Height',
   class: 'actionBtn',
   actions: [
-    {label: 'Raise', action:(d)=>d.h++},
-    {label: 'Lower', action:(d)=>d.h--}
+    {label: 'H0', action:(d)=>d.h=0},
+    {label: 'H1', action:(d)=>d.h=1},
+    {label: 'H2', action:(d)=>d.h=2},
+    {label: 'H3', action:(d)=>d.h=3}
   ]
 };
 
@@ -164,7 +158,7 @@ function update() {
 
   canvas.selectAll('.cell')
     .style('fill', function(d) {
-      return d3.rgb(255-20*d.h, 255-20*d.h, 255-20*d.h);
+      return d3.rgb(255-30*d.h, 255-30*d.h, 255-30*d.h);
     });
 
   canvas.selectAll('.terrain').remove();
