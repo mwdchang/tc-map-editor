@@ -56,7 +56,7 @@ function exportData(data, size) {
   let buffer = '';
   let append = (str) => { buffer = buffer + str; buffer = buffer + '\n'};
   let appendCell = (cell) => {
-    append(cell.x + ',' + cell.y + ',' + cell.h);
+    append(cell.x + ',' + cell.y + ',' + cell.h + ',' + cell.t);
   };
   append(size+','+size);
   data.forEach(appendCell);
@@ -75,8 +75,10 @@ function importData(txt) {
     let x = +components[0];
     let y = +components[1];
     let h = components[2];
+    let t = components[3];
 
     data[x*size + y].h = h;
+    data[x*size + y].t = t;
   });
 
   return { gridSize: size, data: data };
