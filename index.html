@@ -37,10 +37,10 @@
       <span>Export Format</span><br>
       <code>
         gridzie,gridsize <br>
-        x,y,height,terrain <br>
-        x,y,height,terrain <br>
+        x,y,height,terrain,zone <br>
+        x,y,height,terrain,zone <br>
         ... <br>
-        x,y,height,terrain <br>
+        x,y,height,terrain,zone <br>
       </code>
     </div>
   </div>
@@ -105,16 +105,30 @@ let resourceRow = {
   label: 'Resource',
   class: 'actionBtn',
   actions: [
-    {label: 'A'},
-    {label: 'B'}
+	{label: 'clear', action:(d)=>d.r=0},
+    {label: 'A', action:(d)=>d.r=1},
+    {label: 'B', action:(d)=>d.r=2}
   ]
 };
 
+let zoneRow = {
+  label: 'Zone',
+  class: 'actionBtn',
+  actions: [
+	{label: 'clear', action:(d)=>d.z=0},
+    {label: '1', action:(d)=>d.z=1},
+    {label: '2', action:(d)=>d.z=2},
+	{label: '3', action:(d)=>d.z=3},
+	{label: '4', action:(d)=>d.z=4},
+	{label: 'E', action:(d)=>d.z=5}
+  ]
+};
 
 let target = d3.select('#controls');
 createRow(target, heightRow);
 createRow(target, terrainRow);
 createRow(target, resourceRow);
+createRow(target, zoneRow);
 target.append('div').classed('row', true)
   .attr('id', 'summary').style('font-size', '80%');
 
@@ -172,8 +186,10 @@ function update() {
     });
 
   canvas.selectAll('.terrain').remove();
+  canvas.selectAll('.resource').remove();
+   canvas.selectAll('.zone').remove();
 
-  let terrain = _.flatten(data).filter( d => d.t > 0)
+  let terrain = _.flatten(data).filter( d =>  d.t > 0)
   canvas.selectAll('.terrain')
     .data(terrain)
     .enter()
@@ -191,6 +207,46 @@ function update() {
       }
       return 'none';
     });
+	
+	//WC TEST========
+	//resource
+	let resource = _.flatten(data).filter( d => d.r > 0)
+	canvas.selectAll('.resource')
+    .data(resource)
+    .enter()
+    .append('polygon')
+    .classed('resource', true)
+    .attr('points', d => (d.x + 0.5)*w + "," + d.y*h + " " + 
+		d.x*w + "," + (d.y + 1)*h + " " +
+		(d.x + 1)*w + "," + (d.y + 1)*h)
+    .style('fill', 'none')
+    .style('stroke-width', 0.5)
+    .style('stroke', (d) => {
+      if (d.r !== 0) {
+        return scale(d.r);
+      }
+      return 'none';
+    });	
+	
+	//Start and Expansion zones
+	let zone = _.flatten(data).filter( d => d.z > 0)
+	canvas.selectAll('.zone')
+    .data(zone)
+    .enter()
+    .append('circle')
+    .classed('zone', true)
+    .attr('cx', d=>d.x*w + w * 0.5)
+    .attr('cy', d=>d.y*h + h * 0.5)
+	.attr('r', (w-2)*0.5)
+    .style('fill', 'none')
+    .style('stroke-width', 0.5)
+    .style('stroke', (d) => {
+      if (d.z !== 0) {
+        return scale(d.z);
+      }
+      return 'none';
+    });	
+	//===============
 
   let summary = d3.select('#summary');
   summary.selectAll('*').remove();
