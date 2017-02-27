@@ -56,9 +56,9 @@ function exportData(data, size) {
   let buffer = '';
   let append = (str) => { buffer = buffer + str; buffer = buffer + '\n'};
   let appendCell = (cell) => {
-    append(cell.x + ',' + cell.y + ',' + cell.h + ',' + cell.t + ',' + cell.r + ',' + cell.z);
+    append(cell.x + ' ' + cell.y + ' ' + cell.h + ' ' + cell.t + ' ' + cell.r + ' ' + cell.z);
   };
-  append(size+','+size);
+  append(size+' '+size);
   data.forEach(appendCell);
   return buffer;
 }
@@ -67,11 +67,11 @@ function exportData(data, size) {
 function importData(txt) {
   console.log(txt);
   let lines = txt.split(/\n/).map(d => d.trim());
-  let size = +lines.shift().split(/,/)[0];
+  let size = +lines.shift().split(/ /)[0];
   let data = initData(size);
   lines.forEach(line => {
     if (line === '') return;
-    let components = line.split(/,/);
+    let components = line.split(/ /);
     let x = +components[0];
     let y = +components[1];
     let h = components[2];
