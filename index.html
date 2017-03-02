@@ -31,6 +31,12 @@
         <span class="tbtn brushBtn">3x3</span>
         <span class="tbtn brushBtn">5x5</span>
       </div>
+      <div class="row">
+        <span class="label">Mirror</span>
+        <span><input class="brushMirror" type="checkbox"></input>Left-Right</span>
+        &nbsp; &nbsp;
+        <span><input class="brushMirror" type="checkbox"></input>Top-Bottom</span>
+      </div>
       <hr><br>
     </div>
     <div style="margin-left: 2rem; color:#888">
@@ -64,6 +70,7 @@
 
 let scale = d3.scaleOrdinal().range(d3.schemeCategory10);
 let brush = 0;
+let mirror = [false, false];
 let actionFn = null;
 
 function createRow(target, rowData) {
@@ -139,6 +146,11 @@ d3.selectAll('.brushBtn').on('click', function(d, i) {
   brush = i;
 });
 
+d3.selectAll('.brushMirror').on('click', function(d, i) {
+  mirror[i] = d3.select(this).node().checked;
+  console.log('mirror', mirror);
+});
+
 d3.selectAll('.actionBtn').on('click', function(d, i) {
   d3.selectAll('.actionBtn').classed('active', false);
   d3.select(this).classed('active', true);
@@ -175,6 +187,22 @@ function apply(x, y) {
       actionFn(data[i*GRID_SIZE + j]);
     }
   }
+
+  let mirrorX = mirror[0] === true? (GRID_SIZE - x) % GRID_SIZE -1: x;
+  let mirrorY = mirror[1] === true? (GRID_SIZE - y) % GRID_SIZE -1: y;
+  if (mirrorX === x && mirrorY === y) return;
+
+  xmin = Math.max(mirrorX - brush, 0);
+  ymin = Math.max(mirrorY - brush, 0);
+  xmax = Math.min(mirrorX + brush, GRID_SIZE-1);
+  ymax = Math.min(mirrorY + brush, GRID_SIZE-1);
+
+  for (let i=xmin; i <= xmax; i++) {
+    for (let j=ymin; j <= ymax; j++) {
+      actionFn(data[i*GRID_SIZE + j]);
+    }
+  }
+
 }
 
 
@@ -207,7 +235,7 @@ function update() {
       }
       return 'none';
     });
-	
+
 	//WC TEST========
 	//resource
 	let resource = _.flatten(data).filter( d => d.r > 0)
@@ -216,7 +244,7 @@ function update() {
     .enter()
     .append('polygon')
     .classed('resource', true)
-    .attr('points', d => (d.x + 0.5)*w + "," + d.y*h + " " + 
+    .attr('points', d => (d.x + 0.5)*w + "," + d.y*h + " " +
 		d.x*w + "," + (d.y + 1)*h + " " +
 		(d.x + 1)*w + "," + (d.y + 1)*h)
     .style('fill', 'none')
@@ -226,8 +254,8 @@ function update() {
         return scale(d.r);
       }
       return 'none';
-    });	
-	
+    });
+
 	//Start and Expansion zones
 	let zone = _.flatten(data).filter( d => d.z > 0)
 	canvas.selectAll('.zone')
@@ -245,7 +273,7 @@ function update() {
         return scale(d.z);
       }
       return 'none';
-    });	
+    });
 	//===============
 
   let summary = d3.select('#summary');
